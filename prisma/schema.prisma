@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// Пользователи
+// ============================================
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      String   @default("student")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Связи
+  coursesCreated Course[]      @relation("TeacherCourses")
+  enrollments    Enrollment[]
+  testAttempts   TestAttempt[] // ← ДОБАВЬ ЭТУ СТРОКУ
+}
+
+// ============================================
+// Курсы
+// ============================================
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teacherId String
+  teacher   User   @relation("TeacherCourses", fields: [teacherId], references: [id], onDelete: Cascade)
+
+  // Связи
+  lessons     Lesson[]
+  enrollments Enrollment[]
+  tests       Test[]       // ← ДОБАВЬ ЭТУ СТРОКУ
+}
+
+// ============================================
+// Уроки внутри курса
+// ============================================
+model Lesson {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   // текст урока (Markdown/HTML — решим позже)
+  order     Int      @default(0) // порядковый номер в курсе
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Связь с курсом
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// Запись студента на курс
+// ============================================
+model Enrollment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // Связи
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Уникальность: один студент — одна запись на курс
+  @@unique([studentId, courseId])
+}// ============================================
+// Тесты
+// ============================================
+model Test {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Связь с курсом
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Связи
+  questions Question[]
+  attempts  TestAttempt[]
+}
+
+// ============================================
+// Вопросы теста
+// ============================================
+model Question {
+  id     String @id @default(cuid())
+  text   String
+  order  Int    @default(0)
+  points Int    @default(1)
+
+  // Связь с тестом
+  testId String
+  test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  // Связи
+  answers        Answer[]
+  attemptAnswers AttemptAnswer[]
+}
+
+// ============================================
+// Варианты ответа
+// ============================================
+model Answer {
+  id        String  @id @default(cuid())
+  text      String
+  isCorrect Boolean @default(false)
+
+  // Связь с вопросом
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  // Связи
+  attemptAnswers AttemptAnswer[]
+}
+
+// ============================================
+// Попытка прохождения теста
+// ============================================
+model TestAttempt {
+  id          String    @id @default(cuid())
+  score       Int       @default(0)
+  maxScore    Int       @default(0)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  // Связи
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  testId String
+  test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  answers AttemptAnswer[]
+}
+
+// ============================================
+// Ответы студента в попытке
+// ============================================
+model AttemptAnswer {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // Связи
+  attemptId String
+  attempt   TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  answerId String
+  answer   Answer @relation(fields: [answerId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+}

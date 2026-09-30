@@ -1,11 +1,14 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AuthLayout from "@/components/AuthLayout";
 import Input from "@/components/Input";
 
 export default function RegisterPage() {
+  const router = useRouter();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,7 +18,9 @@ export default function RegisterPage() {
     email?: string;
     password?: string;
   }>({});
-  const [submitted, setSubmitted] = useState(false);
+  const [serverError, setServerError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   function validate() {
     const next: typeof errors = {};
@@ -33,13 +38,41 @@ export default function RegisterPage() {
     return Object.keys(next).length === 0;
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setServerError("");
+    setSuccess(false);
+
     if (!validate()) return;
 
-    // TODO: подключить реальную регистрацию (Auth.js + Prisma)
-    console.log("register:", { name, email, password, role });
-    setSubmitted(true);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, role }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.fields) {
+          setErrors(data.fields);
+        }
+        setServerError(data.error || "Что-то пошло не так");
+        return;
+      }
+
+      setSuccess(true);
+      setTimeout(() => {
+        router.push("/login");
+      }, 1500);
+    } catch (err) {
+      console.error(err);
+      setServerError("Не удалось связаться с сервером");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -55,9 +88,9 @@ export default function RegisterPage() {
         </>
       }
     >
-      {submitted ? (
+      {success ? (
         <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700 text-center">
-          ✅ Проверка прошла! Логика регистрации будет добавлена на следующем шаге.
+          ✅ Аккаунт создан! Перенаправляем на страницу входа…
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -94,7 +127,6 @@ export default function RegisterPage() {
             autoComplete="new-password"
           />
 
-          {/* Выбор роли */}
           <div className="flex flex-col gap-2">
             <span className="text-sm font-medium text-[var(--foreground)]">
               Я регистрируюсь как
@@ -125,11 +157,18 @@ export default function RegisterPage() {
             </div>
           </div>
 
+          {serverError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {serverError}
+            </div>
+          )}
+
           <button
             type="submit"
-            className="mt-2 w-full rounded-lg bg-[var(--accent)] py-2.5 text-sm font-medium text-white hover:bg-[var(--accent-hover)] transition"
+            disabled={loading}
+            className="mt-2 w-full rounded-lg bg-[var(--accent)] py-2.5 text-sm font-medium text-white hover:bg-[var(--accent-hover)] transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Создать аккаунт
+            {loading ? "Создаём аккаунт…" : "Создать аккаунт"}
           </button>
         </form>
       )}
