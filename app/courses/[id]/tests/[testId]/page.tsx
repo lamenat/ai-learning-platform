@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import DeleteTestButton from "@/components/DeleteTestButton";
 import DeleteQuestionButton from "@/components/DeleteQuestionButton";
+import GenerateQuestionsButton from "@/components/GenerateQuestionsButton";
 
 export default async function TestPage({
   params,
@@ -81,6 +82,7 @@ export default async function TestPage({
                   >
                     + Добавить вопрос
                   </Link>
+                  <GenerateQuestionsButton testId={testId} />
                   <Link
                     href={`/courses/${courseId}/tests/${testId}/edit`}
                     className="rounded-lg border border-[var(--border)] bg-white px-5 py-2.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface)] transition"

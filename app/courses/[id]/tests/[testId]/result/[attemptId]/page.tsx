@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ExplainButton from "@/components/ExplainButton";
 
 export default async function TestResultPage({
   params,
@@ -47,7 +48,6 @@ export default async function TestResultPage({
       ? Math.round((attempt.score / attempt.maxScore) * 100)
       : 0;
 
-  // Определяем цвет и текст по проценту
   let barColor = "bg-red-500";
   let verdict = "Плохо";
   let verdictColor = "text-red-600";
@@ -61,7 +61,6 @@ export default async function TestResultPage({
     verdictColor = "text-yellow-600";
   }
 
-  // История попыток этого студента
   const history = await prisma.testAttempt.findMany({
     where: {
       testId,
@@ -157,9 +156,7 @@ export default async function TestResultPage({
                   <li
                     key={question.id}
                     className={`rounded-xl border bg-white p-6 ${
-                      isRight
-                        ? "border-green-300"
-                        : "border-red-300"
+                      isRight ? "border-green-300" : "border-red-300"
                     }`}
                   >
                     <div className="flex items-start gap-4">
@@ -201,6 +198,13 @@ export default async function TestResultPage({
                                 {correct.text}
                               </span>
                             </div>
+                          )}
+
+                          {!isRight && (
+                            <ExplainButton
+                              questionId={question.id}
+                              givenAnswerId={givenAnswer?.answerId ?? null}
+                            />
                           )}
                         </div>
                       </div>
