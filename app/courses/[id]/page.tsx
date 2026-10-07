@@ -149,25 +149,26 @@ export default async function CoursePage({
             ) : (
               <ol className="flex flex-col gap-3">
                 {course.lessons.map((lesson, index) => (
-                  <li
-                    key={lesson.id}
-                    className="rounded-xl border border-[var(--border)] bg-white p-5 flex items-start gap-4"
-                  >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)] text-white text-sm font-bold">
-                      {index + 1}
-                    </span>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-[var(--foreground)]">
-                        {lesson.title}
-                      </h3>
-                      {lesson.content && (
-                        <p className="mt-1 text-sm text-[var(--muted)] line-clamp-2">
-                          {lesson.content}
-                        </p>
-                      )}
-                    </div>
-                  </li>
-                ))}
+                    <Link
+                      key={lesson.id}
+                      href={`/courses/${course.id}/lessons/${lesson.id}`}
+                      className="group rounded-xl border border-[var(--border)] bg-white p-5 flex items-start gap-4 hover:shadow-md hover:border-[var(--accent)] transition"
+                    >
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)] text-white text-sm font-bold">
+                        {index + 1}
+                      </span>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-[var(--foreground)] group-hover:text-[var(--accent)] transition">
+                          {lesson.title}
+                        </h3>
+                        {lesson.content && (
+                          <p className="mt-1 text-sm text-[var(--muted)] line-clamp-2">
+                            {lesson.content}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
               </ol>
             )}
           </section>

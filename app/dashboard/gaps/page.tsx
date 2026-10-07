@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import KnowledgeDonut from "@/components/KnowledgeDonut";
+import KnowledgeCard from "@/components/KnowledgeCard";
 
 type Status = "strong" | "medium" | "gap";
 
@@ -13,35 +15,17 @@ function statusFor(percent: number): Status {
   return "gap";
 }
 
-const statusMeta: Record<Status, { label: string; color: string; bg: string; bar: string; emoji: string }> = {
-  strong: {
-    label: "Сильная тема",
-    color: "text-green-700",
-    bg: "bg-green-50 border-green-200",
-    bar: "bg-green-500",
-    emoji: "🟢",
-  },
-  medium: {
-    label: "Средний уровень",
-    color: "text-yellow-700",
-    bg: "bg-yellow-50 border-yellow-200",
-    bar: "bg-yellow-500",
-    emoji: "🟡",
-  },
-  gap: {
-    label: "Пробел",
-    color: "text-red-700",
-    bg: "bg-red-50 border-red-200",
-    bar: "bg-red-500",
-    emoji: "🔴",
-  },
-};
+// Безопасный процент: не больше 100 и не меньше 0
+function safePercent(score: number, maxScore: number): number {
+  if (!maxScore || maxScore <= 0) return 0;
+  const p = Math.round((score / maxScore) * 100);
+  return Math.min(100, Math.max(0, p));
+}
 
 export default async function GapsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  // Все завершённые попытки студента
   const attempts = await prisma.testAttempt.findMany({
     where: {
       studentId: user.id,
@@ -51,12 +35,14 @@ export default async function GapsPage() {
       test: {
         include: {
           course: { select: { id: true, title: true } },
+          // считаем реальное число баллов теста — надёжнее, чем maxScore в попытке
+          questions: { select: { points: true } },
         },
       },
     },
   });
 
-  // Группировка по тестам — берём лучшую попытку
+  // Лучшая попытка по каждому тесту
   const byTestMap = new Map<
     string,
     {
@@ -64,13 +50,16 @@ export default async function GapsPage() {
       testTitle: string;
       courseId: string;
       courseTitle: string;
-      attempts: number;
       bestScore: number;
-      maxScore: number;
+      maxScore: number; // считаем по questions.points, а не из попытки
     }
   >();
 
   for (const a of attempts) {
+    // Истинный максимум — сумма points у вопросов теста
+    const trueMaxScore =
+      a.test.questions.reduce((s, q) => s + q.points, 0) || a.maxScore;
+
     const existing = byTestMap.get(a.testId);
     if (!existing) {
       byTestMap.set(a.testId, {
@@ -78,20 +67,22 @@ export default async function GapsPage() {
         testTitle: a.test.title,
         courseId: a.test.course.id,
         courseTitle: a.test.course.title,
-        attempts: 1,
         bestScore: a.score,
-        maxScore: a.maxScore,
+        maxScore: trueMaxScore,
       });
     } else {
-      existing.attempts += 1;
       existing.bestScore = Math.max(existing.bestScore, a.score);
+      existing.maxScore = Math.max(existing.maxScore, trueMaxScore);
     }
   }
 
   const tests = Array.from(byTestMap.values()).map((t) => {
-    const percent =
-      t.maxScore > 0 ? Math.round((t.bestScore / t.maxScore) * 100) : 0;
-    return { ...t, percent, status: statusFor(percent) as Status };
+    const percent = safePercent(t.bestScore, t.maxScore);
+    return {
+      ...t,
+      percent,
+      status: statusFor(percent) as Status,
+    };
   });
 
   // Группировка по курсам
@@ -123,29 +114,21 @@ export default async function GapsPage() {
     }
   }
 
-  const byCourse = Array.from(byCourseMap.values()).map((c) => ({
+  const courses = Array.from(byCourseMap.values()).map((c) => ({
     ...c,
-    percent:
-      c.maxScore > 0 ? Math.round((c.score / c.maxScore) * 100) : 0,
+    percent: safePercent(c.score, c.maxScore),
   }));
-
-  // Общая статистика
-  const totalScore = tests.reduce((s, t) => s + t.bestScore, 0);
-  const totalMaxScore = tests.reduce((s, t) => s + t.maxScore, 0);
-  const overallPercent =
-    totalMaxScore > 0 ? Math.round((totalScore / totalMaxScore) * 100) : 0;
 
   const strongCount = tests.filter((t) => t.status === "strong").length;
   const mediumCount = tests.filter((t) => t.status === "medium").length;
   const gapCount = tests.filter((t) => t.status === "gap").length;
-  const gaps = tests.filter((t) => t.status === "gap");
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
       <main className="flex-1 bg-[var(--surface)]">
-        <div className="mx-auto max-w-4xl px-6 py-12">
+        <div className="mx-auto max-w-5xl px-6 py-12">
           <Link
             href="/dashboard"
             className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] transition"
@@ -157,7 +140,7 @@ export default async function GapsPage() {
             🧠 Мои знания
           </h1>
           <p className="mt-2 text-[var(--muted)]">
-            Анализ твоих результатов по тестам и карта пробелов
+            Визуальная карта твоих сильных тем и пробелов
           </p>
 
           {tests.length === 0 ? (
@@ -178,92 +161,43 @@ export default async function GapsPage() {
             </div>
           ) : (
             <>
-              {/* Общий прогресс */}
+              {/* Круговая диаграмма + легенда */}
               <section className="mt-10 rounded-2xl border border-[var(--border)] bg-white p-8">
-                <div className="flex items-baseline justify-between">
-                  <div>
-                    <p className="text-sm text-[var(--muted)]">
-                      Общий результат
-                    </p>
-                    <p className="mt-1 text-5xl font-bold text-[var(--foreground)]">
-                      {overallPercent}%
-                    </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                  <div className="flex justify-center">
+                    <KnowledgeDonut
+                      slices={[
+                        { label: "Сильные", value: strongCount, color: "#22c55e" },
+                        { label: "Средние", value: mediumCount, color: "#eab308" },
+                        { label: "Пробелы", value: gapCount, color: "#ef4444" },
+                      ]}
+                      size={200}
+                      thickness={30}
+                    />
                   </div>
-                  <p className="text-sm text-[var(--muted)]">
-                    {totalScore} из {totalMaxScore} баллов
-                  </p>
-                </div>
 
-                <div className="mt-4 w-full h-3 rounded-full bg-[var(--surface)] border border-[var(--border)] overflow-hidden">
-                  <div
-                    className={`h-full transition-all ${
-                      overallPercent >= 80
-                        ? "bg-green-500"
-                        : overallPercent >= 60
-                        ? "bg-yellow-500"
-                        : "bg-red-500"
-                    }`}
-                    style={{ width: `${overallPercent}%` }}
-                  />
+                  <div className="flex flex-col gap-4">
+                    <LegendRow
+                      color="#22c55e"
+                      label="🟢 Сильные темы"
+                      count={strongCount}
+                      desc="80% и выше"
+                    />
+                    <LegendRow
+                      color="#eab308"
+                      label="🟡 Средний уровень"
+                      count={mediumCount}
+                      desc="60–79%"
+                    />
+                    <LegendRow
+                      color="#ef4444"
+                      label="🔴 Пробелы"
+                      count={gapCount}
+                      desc="ниже 60%"
+                    />
+                  </div>
                 </div>
               </section>
-
-              {/* 3 карточки-сводки */}
-              <section className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="rounded-2xl border border-green-200 bg-green-50 p-5">
-                  <div className="text-3xl">🟢</div>
-                  <div className="mt-2 text-2xl font-bold text-green-700">
-                    {strongCount}
-                  </div>
-                  <div className="text-sm text-green-700">Сильных тем</div>
-                </div>
-                <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-5">
-                  <div className="text-3xl">🟡</div>
-                  <div className="mt-2 text-2xl font-bold text-yellow-700">
-                    {mediumCount}
-                  </div>
-                  <div className="text-sm text-yellow-700">Средний уровень</div>
-                </div>
-                <div className="rounded-2xl border border-red-200 bg-red-50 p-5">
-                  <div className="text-3xl">🔴</div>
-                  <div className="mt-2 text-2xl font-bold text-red-700">
-                    {gapCount}
-                  </div>
-                  <div className="text-sm text-red-700">Пробелов</div>
-                </div>
-              </section>
-
-              {/* Пробелы в деталях */}
-              {gaps.length > 0 && (
-                <section className="mt-10">
-                  <h2 className="text-2xl font-bold text-[var(--foreground)] mb-4">
-                    🔴 Что стоит подтянуть
-                  </h2>
-                  <div className="flex flex-col gap-3">
-                    {gaps.map((t) => (
-                      <div
-                        key={t.testId}
-                        className="rounded-xl border border-red-200 bg-red-50 p-5 flex items-center justify-between gap-4"
-                      >
-                        <div className="flex-1">
-                          <p className="font-semibold text-[var(--foreground)]">
-                            {t.testTitle}
-                          </p>
-                          <p className="text-sm text-[var(--muted)]">
-                            {t.courseTitle} · {t.percent}%
-                          </p>
-                        </div>
-                        <Link
-                          href={`/courses/${t.courseId}/tests/${t.testId}/take`}
-                          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition shrink-0"
-                        >
-                          Пройти заново
-                        </Link>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
 
               {/* Разбивка по курсам */}
               <section className="mt-10">
@@ -271,82 +205,86 @@ export default async function GapsPage() {
                   📚 По курсам
                 </h2>
 
-                <div className="flex flex-col gap-4">
-                  {byCourse.map((c) => (
-                    <div
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {courses.map((c) => (
+                    <KnowledgeCard
                       key={c.courseId}
-                      className="rounded-2xl border border-[var(--border)] bg-white p-6"
-                    >
-                      <div className="flex items-center justify-between gap-4">
-                        <div>
-                          <Link
-                            href={`/courses/${c.courseId}`}
-                            className="font-semibold text-[var(--foreground)] hover:text-[var(--accent)] transition"
-                          >
-                            {c.courseTitle}
-                          </Link>
-                          <p className="text-sm text-[var(--muted)]">
-                            {c.score} из {c.maxScore} · {c.percent}%
-                          </p>
-                        </div>
-                        <span
-                          className={`text-lg font-bold ${
-                            c.percent >= 80
-                              ? "text-green-600"
-                              : c.percent >= 60
-                              ? "text-yellow-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {c.percent}%
-                        </span>
-                      </div>
-
-                      <div className="mt-3 w-full h-2 rounded-full bg-[var(--surface)] border border-[var(--border)] overflow-hidden">
-                        <div
-                          className={`h-full ${
-                            c.percent >= 80
-                              ? "bg-green-500"
-                              : c.percent >= 60
-                              ? "bg-yellow-500"
-                              : "bg-red-500"
-                          }`}
-                          style={{ width: `${c.percent}%` }}
-                        />
-                      </div>
-
-                      {/* Тесты внутри курса */}
-                      <ul className="mt-4 flex flex-col gap-2">
-                        {c.tests.map((t) => {
-                          const meta = statusMeta[t.status];
-                          return (
-                            <li
-                              key={t.testId}
-                              className={`flex items-center justify-between gap-3 rounded-lg border px-4 py-2 text-sm ${meta.bg}`}
-                            >
-                              <span className="flex items-center gap-2">
-                                <span>{meta.emoji}</span>
-                                <span className="text-[var(--foreground)]">
-                                  {t.testTitle}
-                                </span>
-                              </span>
-                              <span className={`font-semibold ${meta.color}`}>
-                                {t.percent}%
-                              </span>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
+                      courseId={c.courseId}
+                      courseTitle={c.courseTitle}
+                      percent={c.percent}
+                      tests={c.tests}
+                    />
                   ))}
                 </div>
               </section>
+
+              {/* Что подтянуть */}
+              {gapCount > 0 && (
+                <section className="mt-10">
+                  <h2 className="text-2xl font-bold text-[var(--foreground)] mb-4">
+                    🔴 Что стоит подтянуть
+                  </h2>
+                  <div className="flex flex-col gap-3">
+                    {tests
+                      .filter((t) => t.status === "gap")
+                      .map((t) => (
+                        <div
+                          key={t.testId}
+                          className="rounded-xl border border-red-200 bg-red-50 p-5 flex items-center justify-between gap-4"
+                        >
+                          <div className="flex-1">
+                            <p className="font-semibold text-[var(--foreground)]">
+                              {t.testTitle}
+                            </p>
+                            <p className="text-sm text-[var(--muted)]">
+                              {t.courseTitle} · {t.percent}%
+                            </p>
+                          </div>
+                          <Link
+                            href={`/courses/${t.courseId}/tests/${t.testId}/take`}
+                            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition shrink-0"
+                          >
+                            Пройти заново
+                          </Link>
+                        </div>
+                      ))}
+                  </div>
+                </section>
+              )}
             </>
           )}
         </div>
       </main>
 
       <Footer />
+    </div>
+  );
+}
+
+function LegendRow({
+  color,
+  label,
+  count,
+  desc,
+}: {
+  color: string;
+  label: string;
+  count: number;
+  desc: string;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span
+        className="h-4 w-4 rounded-full shrink-0"
+        style={{ backgroundColor: color }}
+      />
+      <div className="flex-1">
+        <div className="font-medium text-[var(--foreground)]">{label}</div>
+        <div className="text-xs text-[var(--muted)]">{desc}</div>
+      </div>
+      <span className="text-2xl font-bold text-[var(--foreground)]">
+        {count}
+      </span>
     </div>
   );
 }

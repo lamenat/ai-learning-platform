@@ -130,6 +130,24 @@ export default async function PlanPage() {
           <p className="mt-2 text-[var(--muted)]">
             Персональные задачи на основе твоих результатов
           </p>
+          {planTasks.length > 0 && (
+  <div className="mt-6 rounded-2xl border border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50 p-6 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+    <div>
+      <h2 className="font-semibold text-[var(--foreground)]">
+        🤖 AI-тренажёр по пробелам
+      </h2>
+      <p className="mt-1 text-sm text-[var(--muted)]">
+        AI сгенерирует новые вопросы по твоим слабым темам, чтобы закрепить материал
+      </p>
+    </div>
+    <Link
+      href="/dashboard/training"
+      className="rounded-lg bg-purple-600 px-6 py-3 text-sm font-medium text-white hover:bg-purple-700 transition shrink-0 text-center"
+    >
+      🚀 Начать тренировку
+    </Link>
+  </div>
+)}
 
           {tasks.length === 0 ? (
             <div className="mt-10 rounded-2xl border border-[var(--border)] bg-white p-12 text-center">
