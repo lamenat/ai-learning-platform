@@ -67,6 +67,16 @@ export default async function DashboardPage() {
             ? "Управляй своими курсами и следи за прогрессом студентов."
             : "Продолжай обучение и отслеживай свой прогресс."}
         </p>
+        {isTeacher && (
+  <div className="mt-4">
+    <Link
+      href="/teacher/dashboard"
+      className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] px-5 py-2.5 text-sm font-medium text-white hover:bg-[var(--accent-hover)] transition"
+    >
+      👨‍🏫 Дашборд преподавателя
+    </Link>
+  </div>
+)}
 
         {/* Заголовок секции курсов */}
         <div className="mt-10 flex items-center justify-between">
@@ -117,10 +127,17 @@ export default async function DashboardPage() {
     Карта пробелов и сильных тем на основе твоих результатов
   </p>
 </Link>
-<PlaceholderCard
-  title="🎯 План обучения"
-  text="Персональная траектория на основе твоих знаний."
-/>
+<Link
+  href="/dashboard/plan"
+  className="group rounded-2xl border border-[var(--border)] bg-white p-6 hover:shadow-lg hover:border-[var(--accent)] transition"
+>
+  <h3 className="text-lg font-semibold group-hover:text-[var(--accent)] transition">
+    🎯 План обучения
+  </h3>
+  <p className="mt-2 text-sm text-[var(--muted)]">
+    Персональные задачи на основе твоих результатов
+  </p>
+</Link>
         </div>
       </main>
     </div>
