@@ -67,6 +67,7 @@ export default async function DashboardPage() {
             ? "Управляй своими курсами и следи за прогрессом студентов."
             : "Продолжай обучение и отслеживай свой прогресс."}
         </p>
+<<<<<<< Updated upstream
         {isTeacher && (
   <div className="mt-4">
     <Link
@@ -77,6 +78,8 @@ export default async function DashboardPage() {
     </Link>
   </div>
 )}
+=======
+>>>>>>> Stashed changes
 
         {/* Заголовок секции курсов */}
         <div className="mt-10 flex items-center justify-between">
@@ -116,6 +119,7 @@ export default async function DashboardPage() {
 
         {/* Дополнительные секции (заглушки) */}
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+<<<<<<< Updated upstream
           <Link
   href="/dashboard/gaps"
   className="group rounded-2xl border border-[var(--border)] bg-white p-6 hover:shadow-lg hover:border-[var(--accent)] transition"
@@ -138,6 +142,16 @@ export default async function DashboardPage() {
     Персональные задачи на основе твоих результатов
   </p>
 </Link>
+=======
+          <PlaceholderCard
+            title="🧠 Мои пробелы"
+            text="AI проанализирует твои результаты и покажет слабые места."
+          />
+          <PlaceholderCard
+            title="🎯 План обучения"
+            text="Персональная траектория на основе твоих знаний."
+          />
+>>>>>>> Stashed changes
         </div>
       </main>
     </div>
