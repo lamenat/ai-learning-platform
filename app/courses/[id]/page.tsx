@@ -121,6 +121,33 @@ export default async function CoursePage({
             </div>
           </header>
 
+          <aside className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/80 p-5 md:p-6" aria-label="Как начать обучение">
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-xl" aria-hidden="true">🧭</span>
+              <div>
+                <p className="text-sm font-semibold text-blue-700">{isAuthor ? "Управляй курсом по шагам" : "С чего начать"}</p>
+                <h2 className="mt-1 font-semibold text-slate-900">
+                  {isAuthor
+                    ? "Добавь уроки, чтобы ученики могли начать обучение"
+                    : isTeacher
+                      ? "Посмотри программу и материалы курса"
+                      : isEnrolled
+                      ? "Ты уже записан — открой первый урок ниже"
+                      : user
+                        ? "Запишись на курс, а затем открой первый урок"
+                        : "Войди в аккаунт, чтобы записаться и начать учиться"}
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  {isAuthor
+                    ? "Нажми «Добавить урок» в разделе уроков. Ученики будут проходить их по порядку."
+                    : isTeacher
+                      ? "Уроки и тесты находятся ниже на этой странице. Нажми на название, чтобы открыть материал."
+                      : "Описание курса поможет понять тему. Уроки находятся ниже на этой странице и открываются нажатием на название."}
+                </p>
+              </div>
+            </div>
+          </aside>
+
           {/* Уроки */}
           <section className="mt-10">
             <div className="flex items-center justify-between mb-4">
@@ -149,7 +176,6 @@ export default async function CoursePage({
             ) : (
               <ol className="flex flex-col gap-3">
                 {course.lessons.map((lesson, index) => (
-<<<<<<< Updated upstream
                     <Link
                       key={lesson.id}
                       href={`/courses/${course.id}/lessons/${lesson.id}`}
@@ -168,29 +194,11 @@ export default async function CoursePage({
                           </p>
                         )}
                       </div>
+                      <span className="hidden shrink-0 items-center gap-2 pt-1 text-sm font-semibold text-blue-700 sm:inline-flex">
+                        Открыть урок <span aria-hidden="true">→</span>
+                      </span>
                     </Link>
                   ))}
-=======
-                  <li
-                    key={lesson.id}
-                    className="rounded-xl border border-[var(--border)] bg-white p-5 flex items-start gap-4"
-                  >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)] text-white text-sm font-bold">
-                      {index + 1}
-                    </span>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-[var(--foreground)]">
-                        {lesson.title}
-                      </h3>
-                      {lesson.content && (
-                        <p className="mt-1 text-sm text-[var(--muted)] line-clamp-2">
-                          {lesson.content}
-                        </p>
-                      )}
-                    </div>
-                  </li>
-                ))}
->>>>>>> Stashed changes
               </ol>
             )}
           </section>

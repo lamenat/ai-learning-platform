@@ -16,6 +16,19 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Админ-панель
+
+Чтобы создать администратора, добавьте в локальный `.env`:
+
+```env
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=длинный-уникальный-пароль-не-короче-12-символов
+```
+
+Перезапустите приложение и войдите с этой почтой и паролем. При первом входе аккаунт администратора будет создан автоматически. Не используйте общий или опубликованный пароль.
+
+После обновления схемы примените миграции командой `npx prisma migrate deploy`. Администратор может одобрять заявки преподавателей и удалять курсы в разделе `/admin`.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

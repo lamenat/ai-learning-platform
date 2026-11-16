@@ -61,19 +61,43 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { title, description } = body as {
+    const { title, description, lessons } = body as {
       title?: string;
       description?: string;
+      lessons?: unknown;
     };
 
     const errors: Record<string, string> = {};
 
-    if (!title || title.trim().length < 3) {
-      errors.title = "Название должно содержать минимум 3 символа";
+    if (typeof title !== "string" || title.trim().length < 3 || title.trim().length > 160) {
+      errors.title = "Название должно содержать от 3 до 160 символов";
     }
 
-    if (!description || description.trim().length < 10) {
-      errors.description = "Описание должно содержать минимум 10 символов";
+    if (
+      typeof description !== "string" ||
+      description.trim().length < 10 ||
+      description.trim().length > 4000
+    ) {
+      errors.description = "Описание должно содержать от 10 до 4000 символов";
+    }
+
+    if (
+      lessons !== undefined &&
+      (!Array.isArray(lessons) ||
+        lessons.length > 8 ||
+        lessons.some(
+          (lesson) =>
+            typeof lesson !== "object" ||
+            lesson === null ||
+            typeof lesson.title !== "string" ||
+            lesson.title.trim().length < 3 ||
+            lesson.title.trim().length > 160 ||
+            typeof lesson.content !== "string" ||
+            lesson.content.trim().length < 20 ||
+            lesson.content.trim().length > 12000
+        ))
+    ) {
+      errors.lessons = "Проверьте названия и материалы уроков";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -89,6 +113,17 @@ export async function POST(req: NextRequest) {
         title: title!.trim(),
         description: description!.trim(),
         teacherId: user.id,
+        ...(Array.isArray(lessons) && lessons.length > 0
+          ? {
+              lessons: {
+                create: lessons.map((lesson, index) => ({
+                  title: lesson.title.trim(),
+                  content: lesson.content.trim(),
+                  order: index,
+                })),
+              },
+            }
+          : {}),
       },
       include: {
         teacher: {

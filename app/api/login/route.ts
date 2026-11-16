@@ -22,22 +22,62 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ===== 1. Ищем пользователя =====
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
-    });
+    const normalizedEmail = email.toLowerCase();
+    const configuredAdminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+    const configuredAdminPassword = process.env.ADMIN_PASSWORD;
+    const isConfiguredAdmin = Boolean(
+      configuredAdminEmail &&
+        configuredAdminPassword &&
+        configuredAdminPassword.length >= 12 &&
+        normalizedEmail === configuredAdminEmail &&
+        password === configuredAdminPassword
+    );
 
-    // Не раскрываем, что именно неверно: email или пароль — защита от перебора
-    if (!user) {
+    // Создаём или обновляем администратора только по паре секретов из окружения.
+    let user = isConfiguredAdmin
+      ? await (async () => {
+          const passwordHash = await bcrypt.hash(configuredAdminPassword!, 10);
+          return prisma.user.upsert({
+            where: { email: normalizedEmail },
+            create: {
+              email: normalizedEmail,
+              name: "Администратор",
+              password: passwordHash,
+              role: "admin",
+              teacherApprovalStatus: "approved",
+            },
+            update: {
+              name: "Администратор",
+              password: passwordHash,
+              role: "admin",
+              teacherApprovalStatus: "approved",
+            },
+          });
+        })()
+      : await prisma.user.findUnique({ where: { email: normalizedEmail } });
+
+    // Не раскрываем, что именно неверно: email или пароль — защита от перебора.
+    if (!isConfiguredAdmin && (!user || !(await bcrypt.compare(password, user.password)))) {
       return NextResponse.json(
         { error: "Неверный email или пароль" },
         { status: 401 }
       );
     }
 
-    // ===== 2. Проверяем пароль =====
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) {
+    if (user?.role === "teacher" && user.teacherApprovalStatus === "pending") {
+      return NextResponse.json(
+        { error: "Заявка преподавателя ещё ожидает подтверждения администратора" },
+        { status: 403 }
+      );
+    }
+    if (user?.role === "teacher" && user.teacherApprovalStatus === "rejected") {
+      return NextResponse.json(
+        { error: "Заявка отклонена. Обратитесь к администратору колледжа" },
+        { status: 403 }
+      );
+    }
+
+    if (!user) {
       return NextResponse.json(
         { error: "Неверный email или пароль" },
         { status: 401 }
@@ -56,14 +96,14 @@ export async function POST(req: NextRequest) {
     });
 
     res.cookies.set({
-      name: SESSION_COOKIE,
-      value: user.id,
-      httpOnly: true,          // JS не может прочитать — защита от XSS
-      sameSite: "lax",         // защита от CSRF
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 дней
-    });
+  name: SESSION_COOKIE,
+  value: user.id,
+  httpOnly: true,
+  sameSite: "none", // Ключевое изменение: None
+  secure: true,     // Обязательно: при SameSite=None требуется Secure
+  path: "/",
+  maxAge: 60 * 60 * 24 * 7,
+});
 
     return res;
   } catch (error) {

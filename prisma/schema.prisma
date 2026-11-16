@@ -16,6 +16,7 @@ model User {
   name      String
   password  String
   role      String   @default("student")
+  teacherApprovalStatus String @default("approved")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

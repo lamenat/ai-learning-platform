@@ -21,6 +21,7 @@ export default function RegisterPage() {
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [requiresApproval, setRequiresApproval] = useState(false);
 
   function validate() {
     const next: typeof errors = {};
@@ -64,9 +65,10 @@ export default function RegisterPage() {
       }
 
       setSuccess(true);
-      setTimeout(() => {
-        router.push("/login");
-      }, 1500);
+      setRequiresApproval(data.requiresApproval === true);
+      if (data.requiresApproval !== true) {
+        setTimeout(() => router.push("/login"), 1500);
+      }
     } catch (err) {
       console.error(err);
       setServerError("Не удалось связаться с сервером");
@@ -89,8 +91,17 @@ export default function RegisterPage() {
       }
     >
       {success ? (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700 text-center">
-          ✅ Аккаунт создан! Перенаправляем на страницу входа…
+        <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center text-sm text-green-700">
+          {requiresApproval ? (
+            <>
+              <p>✅ Заявка на регистрацию преподавателя отправлена администратору. Войти можно после подтверждения.</p>
+              <Link href="/login" className="mt-3 inline-block font-semibold underline">
+                Перейти ко входу
+              </Link>
+            </>
+          ) : (
+            "✅ Аккаунт создан! Перенаправляем на страницу входа…"
+          )}
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">

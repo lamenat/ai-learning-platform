@@ -59,12 +59,14 @@ export async function POST(req: NextRequest) {
         email: email!.toLowerCase(),
         password: passwordHash,
         role: finalRole,
+        teacherApprovalStatus: finalRole === "teacher" ? "pending" : "approved",
       },
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
+        teacherApprovalStatus: true,
         createdAt: true,
         // password НЕ возвращаем наружу — это критично для безопасности!
       },
@@ -74,6 +76,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         message: "Пользователь успешно зарегистрирован",
+        requiresApproval: finalRole === "teacher",
         user,
       },
       { status: 201 }

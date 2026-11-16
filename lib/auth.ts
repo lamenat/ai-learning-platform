@@ -27,8 +27,16 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
       name: true,
       email: true,
       role: true,
+      teacherApprovalStatus: true,
     },
   });
+
+  if (
+    user?.role === "teacher" &&
+    user.teacherApprovalStatus !== "approved"
+  ) {
+    return null;
+  }
 
   return user;
 }

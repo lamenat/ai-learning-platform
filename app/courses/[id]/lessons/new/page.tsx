@@ -60,9 +60,9 @@ export default function NewLessonPage() {
   <div className="mx-auto max-w-6xl px-6 h-16 flex items-center">
     <Link href="/" className="flex items-center gap-2 font-semibold">
       <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-white text-sm font-bold">
-        AI
+        ЧПТК
       </span>
-      <span>Learning Platform</span>
+      <span>Учебная платформа ЧПТК</span>
     </Link>
   </div>
 </header>

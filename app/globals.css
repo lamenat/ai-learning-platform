@@ -1,13 +1,82 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   --background: #ffffff;
-  --foreground: #0f172a;
-  --muted: #64748b;
-  --border: #e2e8f0;
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --surface: #f8fafc;
+  --foreground: #202a24;
+  --foreground-secondary: #3f4d44;
+  --muted: #68746c;
+  --border: #dce2dd;
+  --accent: #1f5b3d;
+  --accent-hover: #17472f;
+  --accent-soft: #edf4ef;
+  --accent-border: #d7e5da;
+  --surface: #f3f5f3;
+  --card: #ffffff;
+  --brand-panel: #183f2e;
+  --brand-panel-muted: #dce8df;
+  --success-soft: #edf7ef;
+  --success-border: #cbe5d0;
+  --success: #3e8b54;
+  --success-strong: #24663a;
+  --danger-soft: #fff1f0;
+  --danger-border: #f2cfcc;
+  --danger: #c3473d;
+  --danger-strong: #9c302b;
+  --warning-soft: #fff8e8;
+  --warning-border: #f0dfb7;
+  --warning: #a36e13;
+  --warning-strong: #79500d;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #111713;
+  --foreground: #edf2ee;
+  --foreground-secondary: #d2ddd5;
+  --muted: #a2afa6;
+  --border: #344139;
+  --accent: #82b995;
+  --accent-hover: #9bcaa9;
+  --accent-soft: #203329;
+  --accent-border: #385242;
+  --surface: #18211b;
+  --card: #202b23;
+  --brand-panel: #15251b;
+  --brand-panel-muted: #cedbd1;
+  --success-soft: #203629;
+  --success-border: #345642;
+  --success: #3f8055;
+  --success-strong: #a4d7b0;
+  --danger-soft: #392525;
+  --danger-border: #68403e;
+  --danger: #e17e75;
+  --danger-strong: #f2aaa3;
+  --warning-soft: #372f1e;
+  --warning-border: #5e4d2d;
+  --warning: #e0b45c;
+  --warning-strong: #edcc83;
+}
+
+:root[data-theme="dark"] [class~="bg-[var(--accent)]"],
+:root[data-theme="dark"] [class~="bg-blue-600"],
+:root[data-theme="dark"] [class~="bg-blue-700"],
+:root[data-theme="dark"] [class~="bg-purple-600"],
+:root[data-theme="dark"] [class~="bg-purple-700"] {
+  background-color: #205b3b;
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] [class~="hover:bg-[var(--accent-hover)]"]:hover,
+:root[data-theme="dark"] [class~="hover:bg-blue-700"]:hover,
+:root[data-theme="dark"] [class~="hover:bg-purple-700"]:hover {
+  background-color: #2a7048;
+}
+
+:root[data-theme="dark"] [class~="bg-red-500"],
+:root[data-theme="dark"] [class~="bg-red-600"],
+:root[data-theme="dark"] [class~="bg-red-700"] {
+  color: #281311;
 }
 
 @theme inline {
@@ -18,6 +87,52 @@
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-surface: var(--surface);
+  --color-blue-50: var(--accent-soft);
+  --color-blue-100: var(--accent-border);
+  --color-blue-200: var(--accent-border);
+  --color-blue-300: var(--accent-border);
+  --color-blue-600: var(--accent);
+  --color-blue-700: var(--accent);
+  --color-emerald-50: var(--success-soft);
+  --color-emerald-700: var(--success-strong);
+  --color-green-50: var(--success-soft);
+  --color-green-100: var(--success-soft);
+  --color-green-200: var(--success-border);
+  --color-green-300: var(--success-border);
+  --color-green-500: var(--success);
+  --color-green-600: var(--success-strong);
+  --color-green-700: var(--success-strong);
+  --color-green-800: var(--success-strong);
+  --color-red-50: var(--danger-soft);
+  --color-red-100: var(--danger-soft);
+  --color-red-200: var(--danger-border);
+  --color-red-300: var(--danger-border);
+  --color-red-400: var(--danger);
+  --color-red-500: var(--danger);
+  --color-red-600: var(--danger-strong);
+  --color-red-700: var(--danger-strong);
+  --color-red-800: var(--danger-strong);
+  --color-purple-50: var(--accent-soft);
+  --color-purple-100: var(--accent-soft);
+  --color-purple-200: var(--accent-border);
+  --color-purple-300: var(--accent-border);
+  --color-purple-600: var(--accent);
+  --color-purple-700: var(--accent);
+  --color-purple-800: var(--accent);
+  --color-purple-900: var(--foreground);
+  --color-yellow-50: var(--warning-soft);
+  --color-yellow-100: var(--warning-soft);
+  --color-yellow-200: var(--warning-border);
+  --color-yellow-500: var(--warning);
+  --color-yellow-600: var(--warning-strong);
+  --color-yellow-700: var(--warning-strong);
+  --color-slate-50: var(--surface);
+  --color-slate-100: var(--border);
+  --color-slate-300: var(--muted);
+  --color-slate-500: var(--muted);
+  --color-slate-600: var(--muted);
+  --color-slate-700: var(--foreground-secondary);
+  --color-slate-900: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -28,6 +143,7 @@
 
 html {
   scroll-behavior: smooth;
+  background: var(--background);
 }
 
 body {
@@ -40,6 +156,35 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+[class~="bg-[var(--accent)]"],
+[class~="bg-blue-600"],
+[class~="bg-blue-700"],
+[class~="bg-purple-600"],
+[class~="bg-purple-700"] {
+  color: #ffffff !important;
+}
+
+/* Keep existing white and slate utility classes in sync with the selected theme. */
+.bg-white {
+  background-color: var(--card);
+}
+
+.bg-white\/80 {
+  background-color: color-mix(in srgb, var(--card) 80%, transparent);
+}
+
+.bg-white\/90 {
+  background-color: color-mix(in srgb, var(--card) 90%, transparent);
+}
+
+.bg-slate-900 {
+  background-color: var(--brand-panel);
+}
+
+.text-slate-300 {
+  color: var(--brand-panel-muted);
 }
 
 button {

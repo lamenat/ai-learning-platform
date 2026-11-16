@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import ThemeToggle from "@/components/ThemeToggle";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Learning Platform — персональное обучение с AI",
+  title: "Учебная платформа ГПОУ ЧПТК",
   description:
-    "Адаптивная образовательная платформа: курсы, тесты, анализ пробелов в знаниях и персональный план обучения на основе AI.",
+    "Учебная платформа Читинского политехнического колледжа: курсы, уроки, тесты и персональный план обучения.",
 };
 
 export default function RootLayout({
@@ -24,9 +25,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru">
+    <html lang="ru" data-theme="light">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         {children}
+        <ThemeToggle />
       </body>
     </html>
   );

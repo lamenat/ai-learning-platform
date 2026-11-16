@@ -44,8 +44,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Успех — редирект на dashboard
-      router.push("/dashboard");
+      // Администратору открываем панель, остальные роли идут в личный кабинет.
+      router.push(data.user?.role === "admin" ? "/admin" : "/dashboard");
       router.refresh(); // обновить состояние серверных компонентов
     } catch (err) {
       console.error(err);

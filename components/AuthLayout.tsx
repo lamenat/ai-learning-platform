@@ -20,10 +20,10 @@ export default function AuthLayout({
       <header className="w-full">
         <div className="mx-auto max-w-6xl px-6 py-6">
           <Link href="/" className="inline-flex items-center gap-2 font-semibold text-lg">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-white text-sm font-bold">
-              AI
+            <span className="flex h-8 min-w-9 items-center justify-center rounded-lg bg-[var(--accent)] px-1 text-[10px] font-bold text-white">
+              ЧПТК
             </span>
-            <span>Learning Platform</span>
+            <span className="hidden text-sm sm:inline">Читинский политехнический колледж</span>
           </Link>
         </div>
       </header>
